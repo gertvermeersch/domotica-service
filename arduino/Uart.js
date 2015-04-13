@@ -2,6 +2,7 @@
  * Created by GeVr on 6/04/2015.
  */
 winston = require('winston');
+serialport = require("serialport");
 
 function Uart(serialPortDevice) {
     this.callbacks = [];
@@ -38,27 +39,52 @@ function Uart(serialPortDevice) {
     });
 
 
-    // open serial port interface
-    // ...
+    this.serialPort = new serialport.SerialPort(serialPortDevice, {
+        baudrate: 115200,
+        parser: serialport.parsers.readline("\r")
+    }, true);
 
+    this.serialPort.on('data', function(data) {
+        self.receive(data);
+    })
+
+    this.serialPort.on('open', function(error) {self.onSerialReady(error)});
+}
+
+Uart.prototype.onSerialReady = function(error) {
+    if(error)
+        this.logger.warn(error);
+    else
+        this.logger.info("serial port opened");
 }
 Uart.prototype.registerCallback = function(callback) {
     this.callbacks[this.callbacks.length] = callback;
 };
 
 Uart.prototype.send = function(message) {
-    // serial send message
-    // ...
-    console.log("got: " + message + " to send");
-};
+
+    if(message.length > 32)
+        this.logger.error("Message is too long! max = 32 byte");
+    else {
+        var serialBuffer = new Buffer(32);
+        serialBuffer.fill("0");
+        serialBuffer.write(message);
+        this.serialPort.write(serialBuffer);
+        this.logger.info("Message: \"" + message + "\" sent");
+    }
+
+ };
 
 //on receive
 Uart.prototype.receive = function(data) {
+    console.log(data);
     this.logger.info("data received: " + data);
     for(var i = 0; i < this.callbacks.length; i++) {
         this.callbacks[i](data);
     }
 };
+
+
 
 
 
