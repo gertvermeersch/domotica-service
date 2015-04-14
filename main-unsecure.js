@@ -3,6 +3,7 @@
  */
 var RestService = require("./RestService.js");
 var Outlets = require("./devices/Outlets.js");
+var ClimateController = require("./devices/ClimateController.js");
 var Uart = require("./arduino/Uart.js");
 var port = '8080';
 
@@ -12,4 +13,5 @@ var serviceInstance = new RestService(port, {
     ssl: false
 });
 var outlets = new Outlets(serviceInstance, uart);
+var climateController = new ClimateController(serviceInstance, uart);
 

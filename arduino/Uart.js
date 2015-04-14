@@ -46,7 +46,7 @@ function Uart(serialPortDevice) {
 
     this.serialPort.on('data', function(data) {
         self.receive(data);
-    })
+    });
 
     this.serialPort.on('open', function(error) {self.onSerialReady(error)});
 }
@@ -56,7 +56,7 @@ Uart.prototype.onSerialReady = function(error) {
         this.logger.warn(error);
     else
         this.logger.info("serial port opened");
-}
+};
 Uart.prototype.registerCallback = function(callback) {
     this.callbacks[this.callbacks.length] = callback;
 };
@@ -77,10 +77,9 @@ Uart.prototype.send = function(message) {
 
 //on receive
 Uart.prototype.receive = function(data) {
-    console.log(data);
     this.logger.info("data received: " + data);
     for(var i = 0; i < this.callbacks.length; i++) {
-        this.callbacks[i](data);
+        this.callbacks[i](data.substr(0, 32));
     }
 };
 

@@ -251,7 +251,7 @@ Outlets.prototype.getOutlet = function (req, res, outlet) {
 
 Outlets.prototype.notify = function (data) {
    // data = data.toString().replace(/\W/g, ''); //strip all the garbage
-    this.logger.info("serial data received: " + data);
+    this.logger.info("Outlets: data received: " + data);
     //here we will translate serial message into JSON messages
 
     var source = data.substr(0, 4);
