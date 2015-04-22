@@ -137,9 +137,9 @@ function ClimateController(service, uart) {
 }
 
 ClimateController.prototype.notify = function (data) {
-    winston.info("ClimateController: data received: " + data);
+    this.logger.info("ClimateController: data received: " + data);
     if (data.indexOf("STATHEAT") > -1) {
-        this.states.heating = data.substr(12, 1) == "1" ? true : false;
+        this.states.heating = data.substr(12, 1) == "1";
     }
     if (data.indexOf("STATTEMP") > -1) {
         this.states.currentTemperature = parseFloat(data.substr(12, 4));
@@ -157,6 +157,7 @@ ClimateController.prototype.postShutoff = function (req, res, next) {
     this.states.shutoff = req.body.value;
     res.writeHead(201);
     res.end(JSON.stringify({result: "ok"}));
+    console.log(this.states);
 };
 
 ClimateController.prototype.postAthome = function (req, res, next) {
@@ -202,8 +203,16 @@ ClimateController.prototype.configReadCallback = function () {
     this.updateTargetTemperature();
     setInterval(function () {
         self.updateTargetTemperature();
-    }, 10000); //every 10 minutes
+        self.updateSensor();
+    }, 10000); //every 10 seconds
 
+};
+
+ClimateController.prototype.updateSensor = function () {
+    this.uart.send("wwwwREQTTTMP");
+    this.uart.send("wwwwREQTTEMP");
+    this.uart.send("wwwwREQTHEAT");
+    this.uart.send("wwwwREQTTTMP");
 };
 
 ClimateController.prototype.updateTargetTemperature = function () {
@@ -215,15 +224,16 @@ ClimateController.prototype.updateTargetTemperature = function () {
 
     if (controller.states.targetTemperature != newValue) {
         this.logger.debug("Target temperature update to " + newValue);
+        this.states.targetTemperature = newValue;
+        if (newValue < 10)
+            newValue = '0' + newValue;
         controller.uart.send("wwwwSETVTTMP" + newValue);
     } else
         this.logger.debug("Target temperature still ok");
 };
 
 
-ClimateController.prototype.getConfig = function () {
-    return this._config;
-};
+
 
 
 ClimateController.prototype.readConfig = function (callback) {
@@ -255,13 +265,14 @@ ClimateController.prototype.createConfig = function (callback) {
             week_end_evening: "22:00"
         }
     };
+    var self = this;
     fs.writeFile("heating.conf", JSON.stringify(default_config), function (error) {
         if (error) {
-            this.logger.error("Could not write config file: " + error);
+            self.logger.error("Could not write config file: " + error);
             callback(error);
         }
         else {
-            this.logger.info("Default config file written");
+            self.logger.info("Default config file written");
             callback();
         }
     })
@@ -281,13 +292,14 @@ ClimateController.prototype.updateConfig = function (newConfig, callback) {
         this._config.heating.week_start_evening = newConfig.week_start_evening;
         this._config.heating.week_end_evening = newConfig.week_end_evening;
         this.logger.info("New values: " + JSON.stringify(this._config));
+        var self = this;
         fs.writeFile("heating.conf", JSON.stringify(this._config), function (error) {
             if (error) {
-                this.logger.error("Could not write config file: " + error);
+                self.logger.error("Could not write config file: " + error);
                 callback(error);
             }
             else {
-                this.logger.info("Config file written");
+                self.logger.info("Config file written");
                 callback();
             }
         });
@@ -298,42 +310,49 @@ ClimateController.prototype.updateConfig = function (newConfig, callback) {
 };
 
 ClimateController.prototype.getCurrentTargetTemperature = function (date) {
-    var now = date ? date : new Date();
 
-    var nowInt = "" +
-        (now.getHours() < 10 ? "0" + now.getHours() : now.getHours()) +
-        (now.getMinutes() < 10 ? "0" + now.getMinutes() : now.getMinutes());
+    if (this.states.shutoff == true)
+        return "0";
+    else if (this.states.athome == true)
+        return this._config.heating.temperature_present;
+    else {
+        var now = date ? date : new Date();
 
-    if (now.getDay() == 6 || now.getDay() == 0) { //weekend
-        this.logger.debug("we are in the weekend");
-        var startInt = this._config.heating.weekend_start_time.substr(0, 2) + this._config.heating.weekend_start_time.substr(3, 2);
-        var endInt = this._config.heating.weekend_stop_time.substr(0, 2) + this._config.heating.weekend_stop_time.substr(3, 2);
-        if (nowInt > startInt && nowInt < endInt) {
-            this.logger.debug("we are at home");
-            return this._config.heating.temperature_present;
+        var nowInt = "" +
+            (now.getHours() < 10 ? "0" + now.getHours() : now.getHours()) +
+            (now.getMinutes() < 10 ? "0" + now.getMinutes() : now.getMinutes());
+
+        if (now.getDay() == 6 || now.getDay() == 0) { //weekend
+            this.logger.debug("we are in the weekend");
+            var startInt = this._config.heating.weekend_start_time.substr(0, 2) + this._config.heating.weekend_start_time.substr(3, 2);
+            var endInt = this._config.heating.weekend_stop_time.substr(0, 2) + this._config.heating.weekend_stop_time.substr(3, 2);
+            if (nowInt > startInt && nowInt < endInt) {
+                this.logger.debug("we are at home");
+                return this._config.heating.temperature_present;
+            }
+            else {
+                this.logger.debug("we are away");
+                return this._config.heating.temperature_away;
+            }
         }
-        else {
-            this.logger.debug("we are away");
-            return this._config.heating.temperature_away;
-        }
-    }
-    else { //week
-        var startMorningInt = this._config.heating.week_start_morning.substr(0, 2) + this._config.heating.week_start_morning.substr(3, 2);
-        var endMorningInt = this._config.heating.week_end_morning.substr(0, 2) + this._config.heating.week_end_morning.substr(3, 2);
+        else { //week
+            var startMorningInt = this._config.heating.week_start_morning.substr(0, 2) + this._config.heating.week_start_morning.substr(3, 2);
+            var endMorningInt = this._config.heating.week_end_morning.substr(0, 2) + this._config.heating.week_end_morning.substr(3, 2);
 
 
-        var startEveningInt = this._config.heating.week_start_evening.substr(0, 2) + this._config.heating.week_start_evening.substr(3, 2);
-        var endEveningInt = this._config.heating.week_end_evening.substr(0, 2) + this._config.heating.week_end_evening.substr(3, 2);
-        this.logger.debug("we are in the week");
-        if ((nowInt > startMorningInt && nowInt < endMorningInt) || (nowInt > startEveningInt && nowInt < endEveningInt)) {
-            this.logger.debug("we are at home");
-            return this._config.heating.temperature_present;
-        }
-        else {
-            this.logger.debug("we are away");
-            return this._config.heating.temperature_away;
-        }
+            var startEveningInt = this._config.heating.week_start_evening.substr(0, 2) + this._config.heating.week_start_evening.substr(3, 2);
+            var endEveningInt = this._config.heating.week_end_evening.substr(0, 2) + this._config.heating.week_end_evening.substr(3, 2);
+            this.logger.debug("we are in the week");
+            if ((nowInt > startMorningInt && nowInt < endMorningInt) || (nowInt > startEveningInt && nowInt < endEveningInt)) {
+                this.logger.debug("we are at home");
+                return this._config.heating.temperature_present;
+            }
+            else {
+                this.logger.debug("we are away");
+                return this._config.heating.temperature_away;
+            }
 
+        }
     }
 };
 

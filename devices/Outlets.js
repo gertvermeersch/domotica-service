@@ -153,68 +153,68 @@ Outlets.prototype.postOutlet = function (req, res, next, outlet) {
     var errorTxt = "";
     var payload = req.body;
     console.log(payload);
-    if(payload.value != "true" && payload.value != "false") {
+    if (payload.value !== true && payload.value !== false) {
         error = true;
-        errorTxt = "No true or false string found in value string";
+        errorTxt = "No true or false value found in value string";
     }
     else {
         switch (outlet) {
             case "dual_twilight":
-                if (payload.value == "true") {
+                if (payload.value) {
                     this.uart.send("0000COMDSWON0");
                     this.states.dual_twilight = true;
                 }
-                if (payload.value == "false") {
+                if (!payload.value) {
                     this.uart.send("0000COMDSWOF0");
                     this.states.dual_twilight = false;
                 }
                 break;
             case "twilight":
-                if (payload.value == "true") {
+                if (payload.value) {
                     this.uart.send("0000COMDSWON1");
                     this.states.twilight = true;
                 }
-                if (payload.value == "false") {
+                if (!payload.value) {
                     this.uart.send("0000COMDSWOF1");
                     this.states.twilight = false;
                 }
                 break;
             case "uplighter":
-                if (payload.value == "true") {
+                if (payload.value) {
                     this.uart.send("0000COMDSWON2");
                     this.states.uplighter = true;
                 }
-                if (payload.value == "false") {
+                if (!payload.value) {
                     this.uart.send("0000COMDSWOF2");
                     this.states.uplighter = false;
                 }
                 break;
             case "desklight":
-                if (payload.value == "true") {
+                if (payload.value) {
                     this.uart.send("0000COMDSWON3");
                     this.states.desklight = true;
                 }
-                if (payload.value == "false") {
+                if (!payload.value) {
                     this.uart.send("0000COMDSWOF3");
                     this.states.desklight = false;
                 }
                 break;
             case "saltlamp":
-                if (payload.value == "true") {
+                if (payload.value) {
                     this.uart.send("0000COMDSWON4");
                     this.states.saltlamp = true;
                 }
-                if (payload.value == "false") {
+                if (!payload.value) {
                     this.uart.send("0000COMDSWOF4");
                     this.states.saltlamp = false;
                 }
                 break;
             case "vaporizer":
-                if (payload.value == "true") {
+                if (payload.value) {
                     this.uart.send("0000COMDSWON5");
                     this.states.vaporizer = true;
                 }
-                if (payload.value == "false") {
+                if (!payload.value) {
                     this.uart.send("0000COMDSWOF5");
                     this.states.vaporizer = false;
                 }
@@ -251,7 +251,7 @@ Outlets.prototype.getOutlet = function (req, res, outlet) {
 
 Outlets.prototype.notify = function (data) {
    // data = data.toString().replace(/\W/g, ''); //strip all the garbage
-    this.logger.info("Outlets: data received: " + data);
+    this.logger.info("Outlets: serial data received: " + data);
     //here we will translate serial message into JSON messages
 
     var source = data.substr(0, 4);
