@@ -52,8 +52,8 @@ function RestService(port, options) {
         });
     else
         this.server = restify.createServer({
-            key: fs.readFileSync('/etc/nginx/ssl/ssl.key'),
-            certificate: fs.readFileSync('/etc/nginx/ssl/ssl-unified.crt'),
+            key: fs.readFileSync('ssl.key'),
+            certificate: fs.readFileSync('ssl-unified.crt'),
             name: "DomoticaServer"
         });
 

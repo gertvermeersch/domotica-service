@@ -11,7 +11,7 @@ function ClimateController(service, uart) {
         transports: [
             new (winston.transports.Console)({timestamp: true, prettyPrint: true, colorize: true, level: 'trace'}),
             new (winston.transports.File)({
-                filename: '/home/gert/domotica/climate_control.log',
+                filename: 'log/climate_control.log',
                 timestamp: true,
                 prettyPrint: true,
                 level: 'trace'
