@@ -318,7 +318,8 @@ ClimateController.prototype.getCurrentTargetTemperature = function (date) {
     else if (this.states.athome == true)
         return this._config.heating.temperature_present;
     else {
-        var now = date ? date : new Date();
+        var now = new Date();
+	now = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
 
         var nowInt = "" +
             (now.getHours() < 10 ? "0" + now.getHours() : now.getHours()) +
