@@ -320,6 +320,7 @@ ClimateController.prototype.getCurrentTargetTemperature = function (date) {
     else {
         var now = new Date();
 	now = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+        this.logger.info("the time is:" + now.toISOString());
 
         var nowInt = "" +
             (now.getHours() < 10 ? "0" + now.getHours() : now.getHours()) +
