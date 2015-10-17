@@ -206,7 +206,7 @@ ClimateController.prototype.configReadCallback = function () {
     setInterval(function () {
         self.updateTargetTemperature();
         self.updateSensor();
-    }, 10000); //every 10 seconds
+    }, 60000); //every 10 seconds
 
 };
 

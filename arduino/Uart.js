@@ -5,6 +5,7 @@ winston = require('winston');
 serialport = require("serialport");
 
 function Uart(serialPortDevice) {
+    this.queue = [];
     this.callbacks = [];
     var self = this;
     this.logger = new (winston.Logger)({
@@ -48,13 +49,22 @@ function Uart(serialPortDevice) {
         self.receive(data);
     });
 
-    this.serialPort.on('open', function(error) {self.onSerialReady(error)});
+    this.serialPort.on('open', function(error) {
+        self.onSerialReady(error)
+    });
 }
 
 Uart.prototype.onSerialReady = function(error) {
-    if(error)
+    
+    if(error) {
         this.logger.warn(error);
+
+    }
     else
+        var self = this;
+        setInterval(function() {
+            self.sendOneMessage();
+        },1000);
         this.logger.info("serial port opened");
 };
 Uart.prototype.registerCallback = function(callback) {
@@ -62,25 +72,33 @@ Uart.prototype.registerCallback = function(callback) {
 };
 
 Uart.prototype.send = function(message) {
+    this.queue.push(message);
+    
 
-    if(message.length > 32)
-        this.logger.error("Message is too long! max = 32 byte");
-    else {
-        var serialBuffer = new Buffer(32);
-        serialBuffer.fill("0");
+};
 
-        serialBuffer.write(message);
-        //serialBuffer.fill("0",message.length,31);
-        this.logger.info(serialBuffer.toString());
-        this.serialPort.write(serialBuffer);
-        this.logger.info("Message: \"" + serialBuffer.toString() + "\" sent");
+ Uart.prototype.sendOneMessage = function() {
+     
+    if(this.queue.length > 0) {
+        var message = this.queue.shift();
+        if(message.length > 32)
+            this.logger.error("Message is too long! max = 32 byte");
+        else {
+            var serialBuffer = new Buffer(32);
+            serialBuffer.fill("0");
+
+            serialBuffer.write(message);
+            //serialBuffer.fill("0",message.length,31);
+            this.logger.info(serialBuffer.toString());
+            this.serialPort.write(serialBuffer);
+            this.logger.info("Message: \"" + serialBuffer.toString() + "\" sent");
+        }
     }
-
- };
+ }
 
 //on receive
 Uart.prototype.receive = function(data) {
-
+    this.logger.info("Received: " + data);
     for(var i = 0; i < this.callbacks.length; i++) {
         this.callbacks[i](data.substr(0, 32));
     }
