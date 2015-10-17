@@ -5,6 +5,7 @@
 var RestService = require("./RestService.js");
 var Outlets = require("./devices/Outlets.js");
 var ClimateController = require("./devices/ClimateController.js");
+var WifiLedStrip = require("./devices/WifiLedStrip.js");
 var Uart = require("./arduino/Uart.js");
 var port = '8080';
 var ssl = false;
@@ -24,4 +25,5 @@ var serviceInstance = new RestService(port, {
 });
 new Outlets(serviceInstance, uart);
 new ClimateController(serviceInstance, uart);
+new WifiLedStrip(serviceInstance);
 

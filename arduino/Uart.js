@@ -9,8 +9,8 @@ function Uart(serialPortDevice) {
     var self = this;
     this.logger = new (winston.Logger)({
         transports: [
-            new (winston.transports.Console)({timestamp:true, prettyPrint:true, colorize: true, level: 'trace'}),
-            new (winston.transports.File)({ filename: 'serial.log', timestamp: true, prettyPrint: true })
+            //new (winston.transports.Console)({timestamp:true, prettyPrint:true, colorize: true, level: 'trace'}),
+            new (winston.transports.File)({ filename: 'log/serial.log', timestamp: true, prettyPrint: true, maxsize: 10485760, maxFiles: 10 })
         ],
         levels: {
             trace: 0,

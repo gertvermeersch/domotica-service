@@ -5,6 +5,7 @@
   "version": "0.0.1",
   "dependencies": {
     "chai": "^2.2.0",
+    "net": "^1.0.2",
     "restify": "^3.0.1",
     "serialport": "^1.6.3",
     "winston": "^0.9.0"

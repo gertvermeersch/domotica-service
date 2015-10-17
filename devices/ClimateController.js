@@ -9,12 +9,14 @@ function ClimateController(service, uart) {
     var self = this;
     this.logger = new (winston.Logger)({
         transports: [
-            new (winston.transports.Console)({timestamp: true, prettyPrint: true, colorize: true, level: 'trace'}),
+            //new (winston.transports.Console)({timestamp: true, prettyPrint: true, colorize: true, level: 'trace'}),
             new (winston.transports.File)({
-                filename: '/home/gert/domotica/climate_control.log',
+                filename: 'log/climate_control.log',
                 timestamp: true,
                 prettyPrint: true,
-                level: 'trace'
+                level: 'trace',
+                maxsize: 10485760,
+                maxFiles: 10
             })
         ],
         levels: {
@@ -150,14 +152,14 @@ ClimateController.prototype.notify = function (data) {
     if (data.indexOf("STATTTMP") > 1) {
         this.states.targetTemperature = parseInt(data.substr(12, 2));
     }
-    console.log(this.states);
+
 };
 
 ClimateController.prototype.postShutoff = function (req, res, next) {
     this.states.shutoff = req.body.value;
     res.writeHead(201);
     res.end(JSON.stringify({result: "ok"}));
-    console.log(this.states);
+
 };
 
 ClimateController.prototype.postAthome = function (req, res, next) {
