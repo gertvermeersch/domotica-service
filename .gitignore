@@ -26,3 +26,10 @@ build/Release
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 .idea
+
+heating.conf
+nohup.out
+ssl-unified.crt
+ssl.key
+
+db_cred.txt

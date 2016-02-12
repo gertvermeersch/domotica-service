@@ -9,6 +9,8 @@ function WifiLedStrip(service) {
     var self = this;
     // configure logger
 
+    this.ip = '192.168.1.107'
+
     this.logger = new (winston.Logger)({
         transports: [
             new (winston.transports.Console)({timestamp: true, prettyPrint: true, colorize: true, level: 'trace'}),
@@ -92,6 +94,13 @@ function WifiLedStrip(service) {
             self.setColour('blue', req, res);
         }
     );
+    service.registerService({
+            type: 'post',
+            path: 'ledstrip/rgb'
+        }, function(req, res, next) {
+            self.setRGB(req, res);
+        }
+    );
 
     this.logger.info("Services registered");
 
@@ -115,11 +124,13 @@ WifiLedStrip.prototype.getColour = function(colour, req, res) {
             break;
     }
 
-    var client = net.connect(23, '192.168.1.107', function() {
+    var client = net.connect(23, this.ip, function() {
         client.on('data', function(data) {
             //console.log(data.toString());
             self.logger.debug("Data received from led strip");
+            res.writeHead(200);
             res.end('{\"' + colour + "\":" + data.toString() + '}');
+
             client.end();
         });
         client.write(cmd);
@@ -127,10 +138,36 @@ WifiLedStrip.prototype.getColour = function(colour, req, res) {
     }); //TODO: remove hard coded ip
     client.setTimeout(5000, function() {
         self.logger.debug("Socket timeout");
+        res.writeHead(500);
         res.end("\"result\": socket timeout");
     });
 
 
+}
+
+WifiLedStrip.prototype.setRGB = function(req, res) {
+    var self = this;
+    this.logger.info("setting rgb: " + req.body.values);
+    var cmd = 'setRGB(' + req.body.values.red + ';' + req.body.values.green + ';' + req.body.values.blue + ')';
+    this.logger.info("command to send: " + cmd);
+    var client = net.connect(23, this.ip, function() {
+        client.on('data', function(data) {
+            //console.log(data.toString());
+            res.end(JSON.stringify({result: data}));
+            self.logger.info("data: " + data);
+            client.end();
+        });
+
+        client.write(cmd);
+        //TODO: temporary fix, led strip should give feedback
+        
+    }); //TODO: remove hard coded ip
+    client.setTimeout(5000, function() {
+        if(res) {
+            res.end(JSON.stringify({result: "socket timeout"}));
+        }
+    
+    });
 }
 
 WifiLedStrip.prototype.setColour = function(colour, req, res, next) {
@@ -146,7 +183,7 @@ WifiLedStrip.prototype.setColour = function(colour, req, res, next) {
             cmd = 'setGreen(' + req.body.value + ')';
             break;
     }
-    var client = net.connect(23, '192.168.1.107', function() {
+    var client = net.connect(23, this.ip, function() {
         client.on('data', function(data) {
             //console.log(data.toString());
 

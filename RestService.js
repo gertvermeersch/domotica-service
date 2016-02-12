@@ -5,46 +5,11 @@ var restify = require('restify');
 var winston = require('winston');
 var fs = require('fs');
 
-function RestService(port, options) {
+function RestService(port, options, logger) {
 
     var self = this;
 
-    this.logger = new (winston.Logger)({
-        transports: [
-            new (winston.transports.Console)({timestamp: true, prettyPrint: true, colorize: true, level: 'trace'}),
-            new (winston.transports.File)({
-                filename: 'service.log',
-                timestamp: true,
-                prettyPrint: true,
-                level: 'trace'
-            })
-        ],
-        levels: {
-            trace: 0,
-            input: 1,
-            verbose: 2,
-            prompt: 3,
-            debug: 4,
-            info: 5,
-            data: 6,
-            help: 7,
-            warn: 8,
-            error: 9
-        },
-        colors: {
-            trace: 'magenta',
-            input: 'grey',
-            verbose: 'cyan',
-            prompt: 'grey',
-            debug: 'blue',
-            info: 'green',
-            data: 'grey',
-            help: 'cyan',
-            warn: 'yellow',
-            error: 'red'
-        }
-
-    });
+    this.logger = logger;
 
     if(options.ssl == false)
         this.server = restify.createServer({
@@ -63,7 +28,8 @@ function RestService(port, options) {
     this.server.use(restify.bodyParser());
 
     this.server.use(restify.authorizationParser());
-    this.server.use(restify.CORS({origins: ['*'], credentials: true}));
+    //this.server.use(restify.CORS({origins: ['*'], credentials: true}));
+    this.server.use(restify.CORS());
     this.server.use(restify.fullResponse());
     restify.CORS.ALLOW_HEADERS.push('authorization'); //allow authorization
 
@@ -75,7 +41,11 @@ function RestService(port, options) {
             res.setHeader('WWW-Authenticate', 'Basic realm="Backend authorization required!"');
             res.end('No credentials found');
         }
-        else if(req.authorization.basic.username == "domoticaApp" && req.authorization.basic.password == "D0m0t1c4") {
+        //TODO: fix authentication
+        else if(req.authorization.basic.username == "gert" && req.authorization.basic.password == "S3cur1ty") {
+            return next();
+        }
+        else if(req.authorization.basic.username == "stefanie" && req.authorization.basic.password == "poes") {
             return next();
         }
         else {
