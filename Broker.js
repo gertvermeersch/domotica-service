@@ -1,4 +1,5 @@
 "use strict";
+var Dashboard = require('./devices/Dashboard.js');
 
 var ClimateController = require("./devices/ClimateController.js");
 
@@ -12,17 +13,16 @@ class Broker {
 	    this.datalogger = context.datalogger;
 	    this.context = context;
 
+	    this.climateController = new ClimateController(this.context, "wwww");
+	    this.dashboard = new Dashboard(context, "pppp", this.climateController);
+	   
 	    //hard coded 
-	    this.createClimateController();
+	   
 	    
 	    
 	}
 
-	createClimateController() {
-		
-		
-		this.climateController = new ClimateController(this.context, "wwww");
-	}
+
 
 }
 

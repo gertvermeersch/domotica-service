@@ -6,7 +6,7 @@ var RestService = require("./RestService.js");
 var Outlets = require("./devices/Outlets.js");
 
 var WifiLedStrip = require("./devices/WifiLedStrip.js");
-var DataLogger = require("./DataLogger.js");
+var Persistence = require("./Persistence.js");
 var Uart = require("./arduino/Uart.js");
 var Dashboard = require("./devices/Dashboard.js");
 var Broker = require("./Broker.js");
@@ -31,8 +31,8 @@ class App {
     constructor(ssl, port) {
         this.logger = new (winston.Logger)({
             transports: [
-                new (winston.transports.Console)({timestamp:true, prettyPrint:true, colorize: true, level: 'trace'}),
-                new (winston.transports.File)({ filename: 'log/domotica.log', colorize: true, timestamp: true, prettyPrint: true, maxsize: 10485760, maxFiles: 10 })
+                new (winston.transports.Console)({timestamp:true, prettyPrint:true, colorize: true, level: 'debug'}),
+                //new (winston.transports.File)({ filename: 'log/domotica.log', colorize: true, timestamp: true, prettyPrint: true, maxsize: 10485760, maxFiles: 10 })
             ],
             levels: {
                 trace: 0,
@@ -49,11 +49,12 @@ class App {
                 error: 'red'
             }
         });
-        this.uart = new Uart("/dev/ttyUSB0", this.logger);
+        this.uart = new Uart("/dev/ttyUSB0", this);
+        this.datalogger = new Persistence(this);
         this.restservice = new RestService(port, {
             ssl: ssl
-        }, this.logger);
-        this.datalogger = new DataLogger(this.logger);
+        }, this);
+        
         this.outlets = new Outlets(this);
 
         this.broker = new Broker(this);

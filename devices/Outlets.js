@@ -9,11 +9,11 @@ class Outlets {
         var self = this;
         this.datalogger = context.datalogger;
         this.logger = context.logger;
-        var uart = context.uart;
+        this.uart = context.uart;
         var service = context.restservice;
 
         //register to the uart
-        uart.registerCallback(function (data) {
+        this.uart.registerCallback(function (data) {
             self.notify(data);
         });
 
@@ -212,7 +212,7 @@ class Outlets {
         var error = false;
         var errorTxt = "";
         var payload = req.body;
-        console.log(payload);
+        
         if (payload.value !== true && payload.value !== false) {
             error = true;
             errorTxt = "No true or false value found in value string";

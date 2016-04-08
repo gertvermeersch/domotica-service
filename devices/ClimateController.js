@@ -5,6 +5,7 @@
 var winston = require('winston');
 var fs = require('fs');
 var request = require('request');
+var path = require('path');
 
 class ClimateController{
 
@@ -42,7 +43,7 @@ class ClimateController{
                     } else {
                         self.readConfig(function (error) {
                             if (error) throw error;
-                            self.configReadCallback();
+                            //self.configReadCallback();
                         });
                     }
                 })
@@ -154,13 +155,10 @@ class ClimateController{
         
     };
 
-    updateMysql() {
+    updateMysql(key, value) {
         var self = this;
         if(typeof self.datalogger !== 'undefined' && self.datalogger) {
-            self.datalogger.insertSensor("temperature", this.states.currentTemperature.toString());
-            self.datalogger.insertSensor("targettemperature", this.states.targetTemperature.toString());
-            self.datalogger.insertSensor("heatingon", this.states.heating.toString());
-            self.datalogger.insertSensor("humidity", this.states.currentHumidity.toString());
+            self.datalogger.insertSensor(key, value);
         } else {
             self.logger.warn("No datalogger defined");
         }
@@ -171,26 +169,23 @@ class ClimateController{
         
         if (data.indexOf("STATHEAT") > -1) {
             this.states.heating = data.substr(12, 1) == "1";
-            this.i++;
+            this.updateMysql("heatingon", this.states.heating.toString());
         }
         if (data.indexOf("STATTEMP") > -1) {
             this.states.currentTemperature = parseFloat(data.substr(12, 4));
-            this.i++;
+            this.updateMysql("temperature", this.states.currentTemperature.toString());
             
         }
         if (data.indexOf("STATHUMY") > -1) {
             this.states.currentHumidity = parseFloat(data.substr(12, 4));
-            this.i++;
+            this.updateMysql("humidity", this.states.currentHumidity.toString());
         }
         if (data.indexOf("STATTTMP") > -1) {
             this.states.targetTemperature = parseInt(data.substr(12, 2));
-            this.updateTargetTemperature(); //seems to cause problems 2/11/2015
-            this.i++;
+            this.updateTargetTemperature(); 
+            this.updateMysql("targettemperature", this.states.targetTemperature.toString());
         }
-        if(this.i = 4) {
-            this.i = 0;
-            this.updateMysql();
-        }
+        
 
     };
 
@@ -294,7 +289,7 @@ class ClimateController{
     readConfig(callback) {
         //var self = this;
         try {
-            fs.readFile("heating.conf", function (error, data) {
+            fs.readFile(path.resolve(__dirname, "heating.conf"), function (error, data) {
                 if (error) {
                     callback(error);
                 }
@@ -322,7 +317,7 @@ class ClimateController{
             }
         };
         var self = this;
-        fs.writeFile("heating.conf", JSON.stringify(default_config), function (error) {
+        fs.writeFile(path.resolve(__dirname, "heating.conf"), JSON.stringify(default_config), function (error) {
             if (error) {
                 self.logger.error("Could not write config file: " + error);
                 callback(error);
@@ -349,7 +344,7 @@ class ClimateController{
             this._config.heating.week_end_evening = newConfig.week_end_evening;
             this.logger.info("New values: " + JSON.stringify(this._config));
             var self = this;
-            fs.writeFile("heating.conf", JSON.stringify(this._config), function (error) {
+            fs.writeFile(path.resolve(__dirname,"heating.conf"), JSON.stringify(this._config), function (error) {
                 if (error) {
                     self.logger.error("Could not write config file: " + error);
                     callback(error);
@@ -371,7 +366,7 @@ class ClimateController{
             return "0";
         else {
             var now = new Date();
-    	    now = new Date(now.getTime() + 3600000);
+    	    now = new Date(now.getTime());
             
     		
     		
